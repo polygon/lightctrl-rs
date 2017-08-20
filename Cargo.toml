@@ -1,0 +1,6 @@
+[package]
+name = "lightctrl"
+version = "0.1.0"
+authors = ["Jan Dohl <jan@legxaro.de>"]
+
+[dependencies]
