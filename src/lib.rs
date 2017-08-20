@@ -64,3 +64,32 @@ impl LEDDevice {
         [red, green, blue]
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::{LEDDevice, LEDError, Color};
+    use std::net::UdpSocket;
+    use std::thread;
+    #[test]
+    fn test_wrong_size() {
+        let dev = LEDDevice::connect("192.0.2.0:1234", 1).unwrap();
+        match dev.update(&[Color::new(0.0, 0.0, 0.0), Color::new(1.0, 0.0, 1.0)]) {
+            Ok(_) => panic!(),
+            Err(LEDError::SizeError{expected, received}) => {assert_eq!(expected, 1); assert_eq!(received, 2);},
+            Err(_) => panic!()
+        }
+    }
+
+    #[test]
+    fn test_data() {
+        let socket = UdpSocket::bind("127.0.0.1:0").unwrap();
+        let addr = socket.local_addr().unwrap();
+        let _th = thread::spawn(move || {
+            let dev = LEDDevice::connect(addr, 1).unwrap();
+            dev.update(&[Color::new(1.0, 0.5, 0.0)]).unwrap();
+        });
+        let mut recv = [0; 3];
+        socket.recv_from(&mut recv).unwrap();
+        assert_eq!(recv, [255, 127, 0]);
+    }
+}
